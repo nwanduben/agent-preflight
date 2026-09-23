@@ -1,224 +1,493 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agent Preflight</title>
+<title>Preflight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f6f4; --card:#fff; --ink:#1c1c1a; --muted:#6b6b66; --line:#e3e3de;
-  --ok-bg:#eaf3de; --ok-ink:#3b6d11; --warn-bg:#faeeda; --warn-ink:#854f0b;
-  --fail-bg:#fcebeb; --fail-ink:#a32d2d; --accent:#185fa5; --accent-bg:#e6f1fb;
-  --radius:10px;
+  --bg:#08080a; --bg-2:#0d0d10; --panel:rgba(255,255,255,.035); --panel-2:rgba(255,255,255,.055);
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+  --ink:#f4f4f5; --ink-2:#a1a1a8; --ink-3:#6c6c74;
+  --pass:#5ee9a0; --warn:#f5c451; --fail:#ff6b63; --live:#7db4ff;
+  --glow:rgba(125,180,255,.16);
+  --r:14px; --r-sm:9px;
+  --sans:"Geist",-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --spring:cubic-bezier(.22,1.2,.36,1); --ease:cubic-bezier(.4,0,.2,1);
 }
-@media (prefers-color-scheme:dark){
-  :root{ --bg:#141413; --card:#1e1e1c; --ink:#ececea; --muted:#9a9a93; --line:#31312e;
-    --ok-bg:#1b2c10; --ok-ink:#c0dd97; --warn-bg:#33240a; --warn-ink:#fac775;
-    --fail-bg:#351414; --fail-ink:#f7c1c1; --accent:#85b7eb; --accent-bg:#0f2438; }
+:root[data-theme="light"]{
+  --bg:#f7f7f8; --bg-2:#ffffff; --panel:rgba(0,0,0,.025); --panel-2:rgba(0,0,0,.04);
+  --line:rgba(0,0,0,.09); --line-2:rgba(0,0,0,.17);
+  --ink:#101012; --ink-2:#55555e; --ink-3:#8a8a93;
+  --pass:#0f8f52; --warn:#9a6a05; --fail:#c9372c; --live:#1f6feb; --glow:rgba(31,111,235,.10);
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif}
-.wrap{max-width:900px;margin:0 auto;padding:32px 20px 80px}
-h1{font-size:22px;font-weight:600;margin:0}
-h2{font-size:16px;font-weight:600;margin:28px 0 12px}
-p.sub{color:var(--muted);margin:4px 0 24px;font-size:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
-label{display:block;font-size:13px;color:var(--muted);margin:0 0 4px}
-input[type=text],input[type=password]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
-  background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
-input:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.row{margin-bottom:14px}
-button{font:inherit;font-weight:500;padding:9px 16px;border-radius:8px;border:1px solid var(--line);
-  background:var(--card);color:var(--ink);cursor:pointer}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button:disabled{opacity:.55;cursor:default}
-details summary{cursor:pointer;color:var(--muted);font-size:13px;margin:6px 0}
-.check{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--ink)}
-.check input{margin-top:4px}
-.banner{border-radius:var(--radius);padding:14px 16px;margin:24px 0 18px;font-weight:500}
-.banner.ok{background:var(--ok-bg);color:var(--ok-ink)} .banner.bad{background:var(--fail-bg);color:var(--fail-ink)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:8px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
-.tile .l{font-size:12px;color:var(--muted)} .tile .v{font-size:22px;font-weight:600}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line)}
-td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
-tr.tool{cursor:pointer} tr.tool:hover td{background:var(--bg)}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
-.pill{display:inline-block;font-size:12px;font-weight:500;padding:2px 9px;border-radius:20px}
-.pill.pass{background:var(--ok-bg);color:var(--ok-ink)} .pill.warn{background:var(--warn-bg);color:var(--warn-ink)}
-.pill.fail{background:var(--fail-bg);color:var(--fail-ink)}
-.finding{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin:10px 0}
-.finding.blocker{border-color:var(--fail-ink)} .finding.warning{border-color:var(--warn-ink)}
-.finding .fix{color:var(--muted);font-size:13px}
-.detail td{background:var(--bg)}
-.err{background:var(--fail-bg);color:var(--fail-ink);padding:12px 14px;border-radius:var(--radius);margin-top:18px}
-.hide{display:none}
-.foot{margin-top:26px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.55;
+  letter-spacing:-.011em; min-height:100vh;
+  background-image:
+    radial-gradient(70rem 40rem at 78% -12%, var(--glow), transparent 62%),
+    radial-gradient(48rem 30rem at -8% 8%, rgba(94,233,160,.07), transparent 60%);
+  background-attachment:fixed;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:44px 28px 120px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ── header ─────────────────────────────────────────────── */
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:44px}
+.mark{display:flex;align-items:center;gap:13px}
+.mark svg{width:30px;height:30px;flex:none}
+.title{font-size:19px;font-weight:500;letter-spacing:-.02em}
+.tagline{color:var(--ink-3);font-size:13px;letter-spacing:.01em;margin-top:1px}
+.theme{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink-2);cursor:pointer;display:grid;place-items:center;transition:.25s var(--ease);flex:none
+}
+.theme:hover{border-color:var(--line-2);color:var(--ink);transform:rotate(-18deg)}
+
+/* ── console ────────────────────────────────────────────── */
+.console{
+  border:1px solid var(--line);border-radius:var(--r);background:
+    linear-gradient(180deg,var(--panel),transparent 70%), var(--bg-2);
+  overflow:hidden;
+}
+.seg{display:flex;gap:2px;padding:7px;border-bottom:1px solid var(--line);background:var(--panel)}
+.seg button{
+  flex:1;padding:9px 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink-3);
+  font:inherit;font-size:13.5px;font-weight:450;cursor:pointer;transition:.22s var(--ease);position:relative
+}
+.seg button:hover{color:var(--ink-2)}
+.seg button[aria-selected="true"]{background:var(--bg-2);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.body{padding:26px 26px 22px}
+.pane{display:none;animation:rise .45s var(--spring) both}
+.pane.on{display:block}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field > label:not(.drop){font-size:12px;color:var(--ink-3);letter-spacing:.03em;text-transform:uppercase;font-weight:500}
+input[type=text],input[type=password]{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--panel);color:var(--ink);font:inherit;font-size:14px;transition:.2s var(--ease)
+}
+input[type=text]{font-family:var(--mono);font-size:13px}
+input::placeholder{color:var(--ink-3);opacity:.7}
+input:hover{border-color:var(--line-2)}
+input:focus{outline:0;border-color:var(--live);background:var(--panel-2);box-shadow:0 0 0 4px var(--glow)}
+.drop{
+  border:1px dashed var(--line-2);border-radius:var(--r-sm);padding:18px;text-align:center;cursor:pointer;
+  color:var(--ink-3);font-size:13px;transition:.22s var(--ease);background:var(--panel)
+}
+.drop:hover,.drop.over{border-color:var(--live);color:var(--ink-2);background:var(--panel-2)}
+.drop strong{display:block;color:var(--ink);font-weight:450;font-size:13.5px;margin-bottom:3px}
+.drop input{display:none}
+.note{font-size:12.5px;color:var(--ink-3);grid-column:1/-1;line-height:1.5}
+
+.live-box{margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
+.switch{display:flex;align-items:flex-start;gap:12px;cursor:pointer;user-select:none}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.track{
+  width:40px;height:23px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);
+  flex:none;position:relative;transition:.28s var(--spring);margin-top:1px
+}
+.track::after{
+  content:"";position:absolute;inset:2px auto 2px 2px;width:17px;border-radius:50%;background:var(--ink-3);
+  transition:.28s var(--spring)
+}
+.switch input:checked + .track{background:color-mix(in srgb,var(--live) 38%,transparent);border-color:var(--live)}
+.switch input:checked + .track::after{transform:translateX(17px);background:var(--ink)}
+.switch input:focus-visible + .track{box-shadow:0 0 0 4px var(--glow)}
+.switch-text{font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.switch-text b{display:block;color:var(--ink);font-weight:450;font-size:14px}
+.live-fields{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s var(--ease),opacity .3s var(--ease),margin .4s var(--ease)}
+.live-fields.on{max-height:340px;opacity:1;margin-top:18px}
+
+footer.actions{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:16px 26px;border-top:1px solid var(--line);background:var(--panel)
+}
+.run{
+  padding:11px 22px;border-radius:99px;border:0;background:var(--ink);color:var(--bg);
+  font:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:.22s var(--spring);
+  display:inline-flex;align-items:center;gap:9px
+}
+.run:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.run:active:not(:disabled){transform:scale(.97)}
+.run:disabled{opacity:.6;cursor:default}
+.run .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
+.run.busy .dot{animation:pulse 1s var(--ease) infinite}
+.hint{font-size:12.5px;color:var(--ink-3);flex:1;min-width:200px}
+
+/* ── verdict ────────────────────────────────────────────── */
+#results{display:none}
+#results.on{display:block}
+.verdict{
+  margin:40px 0 0;padding:34px 30px;border:1px solid var(--line);border-radius:var(--r);
+  background:linear-gradient(135deg,var(--panel),transparent 65%),var(--bg-2);
+  display:flex;align-items:center;gap:30px;flex-wrap:wrap;position:relative;overflow:hidden;
+  animation:rise .5s var(--spring) both
+}
+.verdict::before{
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--st);
+  box-shadow:0 0 26px 1px var(--st)
+}
+.verdict[data-ok="true"]{--st:var(--pass)} .verdict[data-ok="false"]{--st:var(--fail)}
+.verdict h2{font-size:27px;font-weight:450;letter-spacing:-.03em;line-height:1.2}
+.verdict .sub{color:var(--ink-2);font-size:14px;margin-top:6px}
+.verdict .flag{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--st);
+  display:flex;align-items:center;gap:8px;margin-bottom:11px
+}
+.verdict .flag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--st);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--st) 20%,transparent)}
+.gauge{margin-left:auto;display:flex;gap:26px;flex-wrap:wrap}
+.gauge div{text-align:right}
+.gauge .n{font-family:var(--mono);font-size:29px;font-weight:400;letter-spacing:-.03em;line-height:1}
+.gauge .k{font-size:11px;color:var(--ink-3);letter-spacing:.09em;text-transform:uppercase;margin-top:7px}
+.gauge .pass .n{color:var(--pass)} .gauge .warn .n{color:var(--warn)} .gauge .fail .n{color:var(--fail)}
+
+/* ── tool rows ──────────────────────────────────────────── */
+h3.section{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  margin:38px 0 12px;font-weight:500}
+.rows{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--bg-2)}
+.row{
+  display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;gap:16px;align-items:center;
+  padding:15px 20px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .18s var(--ease);
+  animation:rise .4s var(--spring) both
+}
+.row:last-of-type{border-bottom:0}
+.row:hover{background:var(--panel)}
+.row .led{width:8px;height:8px;border-radius:50%;background:var(--st);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--st) 16%,transparent)}
+.row[data-st="pass"]{--st:var(--pass)} .row[data-st="warn"]{--st:var(--warn)} .row[data-st="fail"]{--st:var(--fail)}
+.row .nm{font-family:var(--mono);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.02em}
+.row .chev{color:var(--ink-3);transition:transform .3s var(--spring);font-size:11px}
+.row.open .chev{transform:rotate(90deg)}
+.detail{display:none;padding:4px 20px 22px 56px;border-bottom:1px solid var(--line);background:var(--panel)}
+.detail.on{display:block;animation:rise .35s var(--spring) both}
+.finding{padding:11px 0 11px 15px;border-left:2px solid var(--st);margin:10px 0}
+.finding[data-sev="blocker"]{--st:var(--fail)} .finding[data-sev="warning"]{--st:var(--warn)}
+.finding[data-sev="info"]{--st:var(--ink-3)}
+.finding .msg{font-size:14px}
+.finding .fix{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.6}
+.detail .url{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:14px;word-break:break-all}
+.clean{color:var(--ink-3);font-size:13.5px;padding:8px 0}
+
+.bar{display:flex;align-items:center;gap:18px;margin-top:26px;flex-wrap:wrap}
+.dl{
+  font-size:13.5px;color:var(--ink);text-decoration:none;border:1px solid var(--line);
+  padding:9px 17px;border-radius:99px;transition:.22s var(--ease);display:inline-flex;gap:9px;align-items:center
+}
+.dl:hover{border-color:var(--line-2);background:var(--panel)}
+.err{
+  margin-top:26px;padding:16px 19px;border-radius:var(--r);border:1px solid var(--fail);
+  background:color-mix(in srgb,var(--fail) 9%,transparent);color:var(--ink);font-size:14px;
+  animation:shake .4s var(--ease)
+}
+.hide{display:none !important}
+
+@keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (max-width:720px){
+  .wrap{padding:28px 18px 80px}
+  .fields{grid-template-columns:1fr}
+  .verdict{padding:26px 22px;gap:22px}
+  .gauge{margin-left:0;gap:20px}
+  .row{grid-template-columns:16px minmax(0,1fr) auto;gap:12px;padding:14px 16px}
+  .row .meta{display:none}
+  .detail{padding-left:20px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Agent Preflight</h1>
-  <p class="sub">Check an ElevenLabs agent's webhook tools, and the n8n workflows behind them, before it goes live.</p>
 
-  <form class="card" id="form">
-    <div class="grid" id="paths">
-      <div class="row">
-        <label for="tools_path">Tools folder or agent JSON</label>
-        <input type="text" id="tools_path" placeholder="/path/to/agent/tools">
-      </div>
-      <div class="row">
-        <label for="n8n_path">n8n workflow folder or file</label>
-        <input type="text" id="n8n_path" placeholder="/path/to/n8n">
-      </div>
+<header>
+  <div class="mark">
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-opacity=".22"/>
+      <circle cx="16" cy="16" r="8.5" stroke="currentColor" stroke-opacity=".4"/>
+      <circle cx="16" cy="16" r="2.6" fill="currentColor"/>
+      <path d="M16 2v5M16 25v5M2 16h5M25 16h5" stroke="currentColor" stroke-opacity=".5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="title">Preflight</div>
+      <div class="tagline mono">voice agent tool checks</div>
     </div>
-    <div class="grid">
-      <div class="row">
-        <label for="tools_files">Tool files (JSON, one per tool, or an agent export)</label>
-        <input type="file" id="tools_files" accept=".json,application/json" multiple>
-      </div>
-      <div class="row">
-        <label for="n8n_files">n8n workflow files (JSON)</label>
-        <input type="file" id="n8n_files" accept=".json,application/json" multiple>
-      </div>
-    </div>
-    <div class="row">
-      <label for="name">Report name</label>
-      <input type="text" id="name" placeholder="Client agent">
-    </div>
-
-    <details>
-      <summary>Read live configs instead of files (needs API keys)</summary>
-      <div class="grid" style="margin-top:10px">
-        <div class="row"><label for="agent_id">ElevenLabs agent id</label><input type="text" id="agent_id"></div>
-        <div class="row"><label for="elevenlabs_key">ElevenLabs API key</label><input type="password" id="elevenlabs_key"></div>
-        <div class="row"><label for="n8n_url">n8n base URL</label><input type="text" id="n8n_url" placeholder="https://your-n8n"></div>
-        <div class="row"><label for="n8n_key">n8n API key</label><input type="password" id="n8n_key"></div>
-      </div>
-      <p class="sub" style="margin:0">Keys are used for this one check and never stored.</p>
-    </details>
-
-    <details>
-      <summary>Call each webhook for real</summary>
-      <label class="check" style="margin:10px 0">
-        <input type="checkbox" id="probe">
-        <span>Send a test call to every tool. This runs your workflows, which may write data. Point it at a test copy.</span>
-      </label>
-      <div class="grid">
-        <div class="row"><label for="auth_header">Authorization value</label><input type="password" id="auth_header" placeholder="Bearer ..."></div>
-        <div class="row"><label for="base_url">Send calls here instead</label><input type="text" id="base_url" placeholder="http://127.0.0.1:8099"></div>
-      </div>
-      <label class="check"><input type="checkbox" id="allow_writes"><span>Also call tools that change data (create, block, cancel…)</span></label>
-    </details>
-
-    <div class="foot">
-      <button class="primary" id="run" type="submit">Run check</button>
-      <span id="hint">Files are read from this machine. Nothing is sent anywhere unless you turn on live calls.</span>
-    </div>
-  </form>
-
-  <div id="error" class="err hide"></div>
-  <div id="results" class="hide">
-    <div id="banner" class="banner"></div>
-    <div class="tiles" id="tiles"></div>
-    <h2>Tools</h2>
-    <div class="card" style="padding:0;overflow:hidden">
-      <table><thead><tr><th>Tool</th><th>Method</th><th>Status</th><th>Findings</th></tr></thead>
-      <tbody id="tools"></tbody></table>
-    </div>
-    <div id="other"></div>
-    <div class="foot"><a id="download" href="#" download>Download the full report (Markdown)</a></div>
   </div>
+  <button class="theme" id="theme" aria-label="Switch between dark and light">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>
+    </svg>
+  </button>
+</header>
+
+<form class="console" id="form">
+  <div class="seg" role="tablist" aria-label="Where the agent config comes from">
+    <button type="button" role="tab" id="tab-upload" aria-selected="true" data-pane="upload">Upload files</button>
+    <button type="button" role="tab" id="tab-local" aria-selected="false" data-pane="local">Local folders</button>
+    <button type="button" role="tab" id="tab-api" aria-selected="false" data-pane="api">Live config</button>
+  </div>
+
+  <div class="body">
+    <div class="pane on" id="pane-upload" role="tabpanel" aria-labelledby="tab-upload">
+      <div class="fields">
+        <div class="field">
+          <label for="tools_files">Agent tools</label>
+          <label class="drop" id="drop-tools">
+            <strong id="drop-tools-label">Drop tool JSON here</strong>
+            one file per tool, or an agent export
+            <input type="file" id="tools_files" accept=".json,application/json" multiple>
+          </label>
+        </div>
+        <div class="field">
+          <label for="n8n_files">n8n workflows</label>
+          <label class="drop" id="drop-n8n">
+            <strong id="drop-n8n-label">Drop workflow JSON here</strong>
+            optional, but it catches far more
+            <input type="file" id="n8n_files" accept=".json,application/json" multiple>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-local" role="tabpanel" aria-labelledby="tab-local">
+      <div class="fields">
+        <div class="field">
+          <label for="tools_path">Tools folder</label>
+          <input type="text" id="tools_path" placeholder="~/agent/tools">
+        </div>
+        <div class="field">
+          <label for="n8n_path">n8n folder</label>
+          <input type="text" id="n8n_path" placeholder="~/agent/n8n">
+        </div>
+        <p class="note">Read from the machine running this app. Hosted instances use uploads instead.</p>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-api" role="tabpanel" aria-labelledby="tab-api">
+      <div class="fields">
+        <div class="field"><label for="agent_id">ElevenLabs agent id</label><input type="text" id="agent_id" placeholder="agent_01…"></div>
+        <div class="field"><label for="elevenlabs_key">ElevenLabs API key</label><input type="password" id="elevenlabs_key" placeholder="••••••••"></div>
+        <div class="field"><label for="n8n_url">n8n base URL</label><input type="text" id="n8n_url" placeholder="https://n8n.yourhost.com"></div>
+        <div class="field"><label for="n8n_key">n8n API key</label><input type="password" id="n8n_key" placeholder="••••••••"></div>
+        <p class="note">Read-only. Keys are used for this one check, then dropped.</p>
+      </div>
+    </div>
+
+    <div class="field wide" style="margin-top:18px">
+      <label for="name">Report name</label>
+      <input type="text" id="name" placeholder="Client agent" style="font-family:var(--sans);font-size:14px">
+    </div>
+
+    <div class="live-box">
+      <label class="switch">
+        <input type="checkbox" id="probe">
+        <span class="track"></span>
+        <span class="switch-text">
+          <b>Call every webhook for real</b>
+          Runs your workflows, which may write data. Point it at a test copy.
+        </span>
+      </label>
+      <div class="live-fields" id="live-fields">
+        <div class="fields">
+          <div class="field"><label for="auth_header">Authorization value</label><input type="password" id="auth_header" placeholder="Bearer …"></div>
+          <div class="field"><label for="base_url">Send calls here instead</label><input type="text" id="base_url" placeholder="https://staging.yourhost.com"></div>
+        </div>
+        <label class="switch" style="margin-top:16px">
+          <input type="checkbox" id="allow_writes">
+          <span class="track"></span>
+          <span class="switch-text"><b>Include tools that change data</b>create, block, cancel and the rest</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <footer class="actions">
+    <button class="run" id="run" type="submit"><span class="dot"></span><span id="run-label">Run preflight</span></button>
+    <span class="hint" id="hint">Nothing leaves this machine unless live calls are on.</span>
+  </footer>
+</form>
+
+<div id="error" class="err hide"></div>
+
+<div id="results">
+  <div class="verdict" id="verdict">
+    <div>
+      <div class="flag" id="flag"></div>
+      <h2 id="headline"></h2>
+      <div class="sub" id="subline"></div>
+    </div>
+    <div class="gauge" id="gauge"></div>
+  </div>
+  <h3 class="section">Tools</h3>
+  <div class="rows" id="rows"></div>
+  <div id="other"></div>
+  <div class="bar">
+    <a class="dl" id="download" href="#" download>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
+      Download report
+    </a>
+    <span class="hint mono" id="stamp"></span>
+  </div>
+</div>
+
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-function findingHTML(f) {
-  return `<div class="finding ${f.severity}"><div>${esc(f.message)}</div>` +
-         (f.fix ? `<div class="fix">Fix: ${esc(f.fix)}</div>` : '') + `</div>`;
-}
+/* theme ------------------------------------------------------------------ */
+const root = document.documentElement;
+try { root.dataset.theme = localStorage.getItem('preflight-theme')
+  || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch {}
+$('theme').onclick = () => {
+  root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('preflight-theme', root.dataset.theme); } catch {}
+};
 
-function render(d) {
-  $('error').classList.add('hide');
-  $('results').classList.remove('hide');
-  const b = $('banner');
-  b.className = 'banner ' + (d.ready ? 'ok' : 'bad');
-  b.textContent = d.ready
-    ? `Ready for production. ${d.tools.length} tools checked, no blockers.`
-    : `Not ready for production. Fix ${d.blockers} blocker${d.blockers === 1 ? '' : 's'}, then run again.`;
+/* segmented control ------------------------------------------------------ */
+let source = 'upload';
+document.querySelectorAll('.seg button').forEach(btn => btn.onclick = () => {
+  source = btn.dataset.pane;
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + source));
+});
 
-  $('tiles').innerHTML = [
-    ['Tools', d.tools.length], ['Pass', d.counts.pass], ['Warnings', d.counts.warn],
-    ['Failing', d.counts.fail], ['Blockers', d.blockers],
-  ].map(([l, v]) => `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+/* file pickers ----------------------------------------------------------- */
+const wireDrop = (boxId, inputId, labelId, word) => {
+  const box = $(boxId), input = $(inputId), label = $(labelId);
+  const say = () => label.textContent = input.files.length
+    ? `${input.files.length} ${word}${input.files.length === 1 ? '' : 's'} ready`
+    : label.dataset.idle;
+  label.dataset.idle = label.textContent;
+  input.onchange = say;
+  ['dragenter','dragover'].forEach(e => box.addEventListener(e, ev => { ev.preventDefault(); box.classList.add('over'); }));
+  ['dragleave','drop'].forEach(e => box.addEventListener(e, ev => { ev.preventDefault(); box.classList.remove('over'); }));
+  box.addEventListener('drop', ev => { input.files = ev.dataTransfer.files; say(); });
+};
+wireDrop('drop-tools', 'tools_files', 'drop-tools-label', 'tool file');
+wireDrop('drop-n8n', 'n8n_files', 'drop-n8n-label', 'workflow');
 
-  const probeByTool = Object.fromEntries((d.probes || []).map(p => [p.tool, p]));
-  $('tools').innerHTML = d.tools.map((t, i) => {
-    const p = probeByTool[t.name];
-    const live = p ? (p.skipped ? `skipped: ${esc(p.skipped)}`
-      : `${p.status || esc(p.error)} · ${p.latency_ms} ms · ${p.size ?? '-'} chars`) : '';
-    const detail = (t.findings.length ? t.findings.map(findingHTML).join('') : '<div class="fix">No findings.</div>')
-      + `<div class="fix" style="margin-top:8px"><code>${esc(t.url)}</code>${live ? ' · live call: ' + live : ''}</div>`;
-    return `<tr class="tool" data-i="${i}"><td><code>${esc(t.name)}</code></td><td>${esc(t.method)}</td>` +
-           `<td><span class="pill ${t.status}">${t.status}</span></td>` +
-           `<td>${t.findings.length || '—'}</td></tr>` +
-           `<tr class="detail hide" id="d${i}"><td colspan="4">${detail}</td></tr>`;
-  }).join('');
-  document.querySelectorAll('tr.tool').forEach(tr => tr.onclick = () =>
-    $('d' + tr.dataset.i).classList.toggle('hide'));
+$('probe').onchange = e => $('live-fields').classList.toggle('on', e.target.checked);
 
-  $('other').innerHTML = d.other_findings.length
-    ? '<h2>Workflow-level findings</h2><div class="card">' +
-      d.other_findings.map(f => `<div><strong>${esc(f.tool)}</strong>${findingHTML(f)}</div>`).join('') + '</div>'
-    : '';
-  $('download').href = `/api/report/${d.report_id}.md`;
-  $('download').setAttribute('download', `preflight-${d.agent.replace(/\W+/g, '-').toLowerCase()}.md`);
-}
-
-const readFiles = async (input) => Promise.all(
-  [...input.files].map(f => f.text().then(content => ({name: f.name, content}))));
-
+/* hosted mode hides the local-folder tab -------------------------------- */
 fetch('/api/config').then(r => r.json()).then(cfg => {
   if (!cfg.allow_paths) {
-    $('paths').classList.add('hide');
-    $('hint').textContent = 'Upload your config files. Nothing is stored after the check.';
+    $('tab-local').classList.add('hide');
+    $('hint').textContent = 'Uploaded files are checked in memory and never stored.';
   }
 }).catch(() => {});
 
-$('form').onsubmit = async (e) => {
+/* rendering -------------------------------------------------------------- */
+const findingHTML = f => `<div class="finding" data-sev="${f.severity}">
+  <div class="msg">${esc(f.message)}</div>${f.fix ? `<div class="fix">→ ${esc(f.fix)}</div>` : ''}</div>`;
+
+function render(d) {
+  $('error').classList.add('hide');
+  $('results').classList.add('on');
+
+  const v = $('verdict');
+  v.dataset.ok = String(d.ready);
+  $('flag').textContent = d.ready ? 'cleared for production' : 'hold';
+  $('headline').textContent = d.ready
+    ? 'Every tool checks out.'
+    : `${d.blockers} blocker${d.blockers === 1 ? '' : 's'} to fix first.`;
+  $('subline').textContent = `${d.agent} · ${d.tools.length} tools · `
+    + (d.n8n_checked ? 'config and n8n workflows' : 'config only')
+    + (d.probes.length ? ' · live calls made' : '');
+
+  $('gauge').innerHTML = [['pass','pass'],['warn','warn'],['fail','fail']]
+    .map(([k, cls]) => `<div class="${cls}"><div class="n">${String(d.counts[k]).padStart(2,'0')}</div><div class="k">${k}</div></div>`)
+    .join('');
+
+  const probeBy = Object.fromEntries((d.probes || []).map(p => [p.tool, p]));
+  $('rows').innerHTML = d.tools.map((t, i) => {
+    const p = probeBy[t.name];
+    const meta = p ? (p.skipped ? 'skipped'
+      : `${p.status || p.error} · ${p.latency_ms} ms · ${p.size ?? '-'} ch`) : t.method;
+    const detail = (t.findings.length ? t.findings.map(findingHTML).join('')
+                    : '<div class="clean">Nothing to change.</div>')
+      + `<div class="url">${esc(t.url)}${p && p.skipped ? ' · live call ' + esc(p.skipped) : ''}</div>`;
+    return `<div class="row" data-st="${t.status}" data-i="${i}" role="button" tabindex="0"
+              aria-expanded="false" style="animation-delay:${Math.min(i * 28, 340)}ms">
+        <span class="led"></span><span class="nm">${esc(t.name)}</span>
+        <span class="meta">${esc(meta)}</span><span class="chev">▶</span>
+      </div>
+      <div class="detail" id="d${i}">${detail}</div>`;
+  }).join('');
+
+  document.querySelectorAll('.row').forEach(row => {
+    const toggle = () => {
+      const open = $('d' + row.dataset.i).classList.toggle('on');
+      row.classList.toggle('open', open);
+      row.setAttribute('aria-expanded', String(open));
+    };
+    row.onclick = toggle;
+    row.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+  });
+
+  $('other').innerHTML = d.other_findings.length
+    ? '<h3 class="section">Workflow level</h3><div class="rows" style="padding:8px 20px">'
+      + d.other_findings.map(f => `<div class="finding" data-sev="${f.severity}">
+          <div class="msg"><span class="mono" style="color:var(--ink-3)">${esc(f.tool)}</span> — ${esc(f.message)}</div>
+          ${f.fix ? `<div class="fix">→ ${esc(f.fix)}</div>` : ''}</div>`).join('') + '</div>'
+    : '';
+
+  $('download').href = `/api/report/${d.report_id}.md`;
+  $('download').setAttribute('download', `preflight-${d.agent.replace(/\W+/g, '-').toLowerCase()}.md`);
+  $('stamp').textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  $('results').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+/* submit ----------------------------------------------------------------- */
+const readFiles = async input => Promise.all(
+  [...input.files].map(f => f.text().then(content => ({name: f.name, content}))));
+
+$('form').onsubmit = async e => {
   e.preventDefault();
-  const toolsFiles = await readFiles($('tools_files'));
-  const n8nFiles = await readFiles($('n8n_files'));
+  const upload = source === 'upload';
   const body = {
     name: $('name').value.trim(),
-    // Uploads win, so a path left over in the form doesn't count as a second source.
-    tools_path: toolsFiles.length ? '' : $('tools_path').value.trim(),
-    tools_files: toolsFiles, n8n_files: n8nFiles,
-    agent_id: $('agent_id').value.trim(), elevenlabs_key: $('elevenlabs_key').value,
-    n8n_paths: (!n8nFiles.length && $('n8n_path').value.trim()) ? [$('n8n_path').value.trim()] : [],
-    n8n_url: $('n8n_url').value.trim(), n8n_key: $('n8n_key').value,
+    tools_files: upload ? await readFiles($('tools_files')) : [],
+    n8n_files: upload ? await readFiles($('n8n_files')) : [],
+    tools_path: source === 'local' ? $('tools_path').value.trim() : '',
+    n8n_paths: (source === 'local' && $('n8n_path').value.trim()) ? [$('n8n_path').value.trim()] : [],
+    agent_id: source === 'api' ? $('agent_id').value.trim() : '',
+    elevenlabs_key: $('elevenlabs_key').value,
+    n8n_url: source === 'api' ? $('n8n_url').value.trim() : '', n8n_key: $('n8n_key').value,
     probe: $('probe').checked, auth_header: $('auth_header').value,
     base_url: $('base_url').value.trim(), allow_writes: $('allow_writes').checked,
   };
-  $('run').disabled = true; $('run').textContent = 'Checking…';
+  if (upload && !body.tools_files.length) return fail('Choose at least one tool file first.');
+
+  $('run').disabled = true; $('run').classList.add('busy'); $('run-label').textContent = 'Checking';
   try {
     const res = await fetch('/api/check', {method: 'POST', headers: {'Content-Type': 'application/json'},
                                            body: JSON.stringify(body)});
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Check failed');
+    if (!res.ok) throw new Error(data.detail || 'The check failed.');
     render(data);
   } catch (err) {
-    $('results').classList.add('hide');
-    $('error').textContent = err.message;
-    $('error').classList.remove('hide');
+    fail(err.message);
   } finally {
-    $('run').disabled = false; $('run').textContent = 'Run check';
+    $('run').disabled = false; $('run').classList.remove('busy'); $('run-label').textContent = 'Run preflight';
   }
 };
+
+function fail(message) {
+  $('results').classList.remove('on');
+  $('error').textContent = message;
+  $('error').classList.remove('hide');
+}
 </script>
 </body>
 </html>

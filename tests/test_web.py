@@ -21,7 +21,8 @@ class WebApi(unittest.TestCase):
     def test_page_loads(self):
         r = self.client.get("/")
         self.assertEqual(r.status_code, 200)
-        self.assertIn("Agent Preflight", r.text)
+        self.assertIn("<title>Preflight</title>", r.text)
+        self.assertIn('id="form"', r.text)
 
     def test_check_returns_per_tool_findings(self):
         r = self.client.post("/api/check", json={"tools_path": str(TOOLS), "n8n_paths": [str(WORKFLOW)]})

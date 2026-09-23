@@ -3,7 +3,7 @@ services:
   - type: web
     name: agent-preflight
     runtime: python
-    plan: starter
+    plan: free   # spins down when idle; change to starter for an always-on instance
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn web.app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /healthz
