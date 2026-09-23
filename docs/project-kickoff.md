@@ -6,7 +6,7 @@ A QA tool that checks a voice agent's webhook tools (and the n8n workflows behin
 
 > Build a runnable Python engine, `preflight`, that loads an ElevenLabs agent's webhook tools (from files or the API) and the n8n workflows behind them, runs static checks and an opt-in live probe, and writes a pass/fail report of required changes. Done when (a) tests prove it flags seeded faults (n8n `/webhook-test/` URL, no matching webhook, param name mismatch, missing Respond node, placeholder secret, inactive workflow, non-2xx, over 15,000 chars, timeout, non-JSON, bad auth) and passes a clean tool, and (b) it runs read-only against the ENTIN Bank agent's files. Stop before live calls to ENTIN, the web UI, or Retell/GHL support without the user's approval.
 
-**Phase:** prototype. **Status (2026-09-23):** (a) met, with 18 tests passing; (b) met against ENTIN's repo files; a broken copy of ENTIN's config (7 planted faults) is caught in full; the probe path is proven end to end against `tools/fake_n8n.py` (5 planted server faults caught). Not yet run against the live ElevenLabs agent or n8n instance.
+**Phase:** prototype, hosting-ready. **Status (2026-09-23):** (a) met, with 18 tests passing; (b) met against ENTIN's repo files; a broken copy of ENTIN's config (7 planted faults) is caught in full; the probe path is proven end to end against `tools/fake_n8n.py` (5 planted server faults caught). Hosted mode (uploads, password, public-https-only outbound calls) is built and verified locally; 34 tests. Repo: github.com/nwanduben/agent-preflight (private). **Still not run against the live ElevenLabs agent or n8n instance** — that needs the user's API keys, see docs/live-run.md.
 
 Evidence labels: **observed** (seen in this project), **source-backed** (primary docs, linked), **user-decided**, **hypothesis**.
 
@@ -58,7 +58,7 @@ Evidence labels: **observed** (seen in this project), **source-backed** (primary
 - Is there a test copy of the ENTIN sheet for live probes? **Owner:** user.
 - Internal agency tool or a product to sell? **Owner:** user.
 - ~~Web app stack~~: FastAPI plus one page, matching voiceroi-report. **Decided.**
-- Should the web app be hosted for clients, or stay local? **Owner:** user.
+- Hosted for a team behind one password (built) vs. client accounts (not built: needs sign-up, stored config, a job queue). **Owner:** user.
 
 ## Next milestone and proof checks
 1. Live read-only run: `ELEVENLABS_API_KEY=… N8N_API_KEY=… python3 -m preflight --agent-id <id> --n8n-url <url>`. Check: the tool list matches the ElevenLabs UI and "active" is reported correctly.

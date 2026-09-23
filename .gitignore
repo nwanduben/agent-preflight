@@ -8,3 +8,6 @@ __pycache__/
 # hosts, sheet ids and client names, so they stay off GitHub.
 sandbox/
 reports/
+
+# Editor and harness settings (can hold secrets)
+.claude/
