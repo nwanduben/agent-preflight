@@ -1,0 +1,25 @@
+{
+  "type": "webhook",
+  "name": "get_hours",
+  "description": "hours",
+  "response_timeout_secs": 45,
+  "api_schema": {
+    "url": "https://n8n.acme-agency.com/webhook/crm/get_hours",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "REPLACE_WITH_SECRET"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "description": "id"
+        }
+      },
+      "required": []
+    }
+  }
+}

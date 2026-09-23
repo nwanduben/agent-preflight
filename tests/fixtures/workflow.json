@@ -1,0 +1,206 @@
+{
+  "name": "Acme CRM tools",
+  "active": true,
+  "nodes": [
+    {
+      "name": "Webhook: lookup",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm/lookup_contact",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "name": "Webhook: avail",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm/check_availability",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "name": "Webhook: sms",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm/send_sms",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "name": "Webhook: hours",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm/get_hours",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "name": "Webhook: cancel",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm/cancel_booking",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "name": "Find Contact",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "const b = $json.body;\nreturn [{json:{conv: b.conversation_id, phone: b.phone}}];"
+      }
+    },
+    {
+      "name": "Slots",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "return [{json:{d: $json.body.date, c: $json.body.conversation_id}}];"
+      }
+    },
+    {
+      "name": "Send",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nreturn [{json:{to: body.phone_number, c: body.conversation_id}}];"
+      }
+    },
+    {
+      "name": "Hours",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "return [{json:{c:$json.body.conversation_id, open:'9-5'}}];"
+      }
+    },
+    {
+      "name": "Cancel",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "return [{json:{id:$json.body.booking_id, c:$json.body.conversation_id}}];"
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {
+        "respondWith": "json"
+      }
+    },
+    {
+      "name": "Post-call HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "parameters": {
+        "secret": "PASTE_WEBHOOK_SECRET_HERE"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: lookup": {
+      "main": [
+        [
+          {
+            "node": "Find Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: avail": {
+      "main": [
+        [
+          {
+            "node": "Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: sms": {
+      "main": [
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: hours": {
+      "main": [
+        [
+          {
+            "node": "Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: cancel": {
+      "main": [
+        [
+          {
+            "node": "Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Contact": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slots": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hours": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

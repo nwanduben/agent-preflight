@@ -1,0 +1,4 @@
+# The CLI needs nothing. These are only for the web app (web/app.py).
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.27   # for the web tests

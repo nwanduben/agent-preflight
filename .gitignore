@@ -1,0 +1,10 @@
+# Local environment
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Copies of real agent configs and generated reports: these carry live webhook
+# hosts, sheet ids and client names, so they stay off GitHub.
+sandbox/
+reports/

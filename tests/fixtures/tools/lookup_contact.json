@@ -1,0 +1,33 @@
+{
+  "type": "webhook",
+  "name": "lookup_contact",
+  "description": "Look up the caller's details in the CRM before answering account questions.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://n8n.acme-agency.com/webhook/crm/lookup_contact",
+    "method": "POST",
+    "request_headers": {
+      "Authorization": {
+        "secret_id": "sec_9f8a7b6c"
+      }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id",
+          "description": "injected"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Caller phone in E.164"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "phone"
+      ]
+    }
+  }
+}
