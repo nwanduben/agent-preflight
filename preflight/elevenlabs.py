@@ -61,12 +61,16 @@ def load_path(path: str) -> list[ToolSpec]:
     """A directory of tool files, one tool file, or an exported agent JSON."""
     p = Path(path)
     files = sorted(p.glob("*.json")) if p.is_dir() else [p]
+    return load_objects([(str(f), json.loads(f.read_text())) for f in files])
+
+
+def load_objects(objects: list[tuple[str, dict]]) -> list[ToolSpec]:
+    """(filename, parsed JSON) pairs, as uploaded through the web app."""
     tools = []
-    for f in files:
-        data = json.loads(f.read_text())
+    for name, data in objects:
         inline = data.get("conversation_config", {}).get("agent", {}).get("prompt", {}).get("tools")
         for cfg in inline if inline is not None else [data]:
-            t = tool_from_config(cfg, source=str(f))
+            t = tool_from_config(cfg, source=name)
             if t:
                 tools.append(t)
     return tools

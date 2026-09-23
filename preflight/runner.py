@@ -30,7 +30,7 @@ class Report:
 
 def run(agent: str, tools: list[ToolSpec], workflows: list[dict] | None = None, *, live: bool = False,
         auth_header: str | None = None, base_url: str | None = None, allow_writes: bool = False,
-        only: set[str] | None = None) -> Report:
+        only: set[str] | None = None, public_only: bool = False) -> Report:
     findings: list[Finding] = []
     for t in tools:
         findings += checks.check_tool(t)
@@ -48,7 +48,7 @@ def run(agent: str, tools: list[ToolSpec], workflows: list[dict] | None = None, 
         for t in tools:
             if only and t.name not in only:
                 continue
-            result, extra = probe_mod.probe(t, auth_header, base_url, allow_writes)
+            result, extra = probe_mod.probe(t, auth_header, base_url, allow_writes, public_only)
             probes.append(result)
             findings += extra
 

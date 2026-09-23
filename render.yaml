@@ -1,0 +1,16 @@
+# Render blueprint. Set PREFLIGHT_PASSWORD in the dashboard; it is deliberately not stored here.
+services:
+  - type: web
+    name: agent-preflight
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn web.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: PREFLIGHT_MODE
+        value: hosted
+      - key: PREFLIGHT_PASSWORD
+        sync: false

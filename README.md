@@ -27,6 +27,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 Paste a tools folder and an n8n folder, or open "Read live configs" and give an agent id plus API keys. Keys are used for that one check and never stored. "Call each webhook for real" is off by default, and can be pointed at a test server with "Send calls here instead". Each tool row expands to show its findings, fixes and live-call timing; the whole report downloads as Markdown.
 
+Hosted, it runs in a locked-down mode: uploads instead of file paths, a password, and public https addresses only. See [docs/deploy.md](docs/deploy.md). For the live read-only run against a real agent, see [docs/live-run.md](docs/live-run.md).
+
 ## What it checks
 
 | Area | Blockers | Warnings |

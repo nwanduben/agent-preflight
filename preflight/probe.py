@@ -10,6 +10,7 @@ import urllib.request
 import uuid
 
 from .models import BLOCKER, WARN, Finding, ProbeResult, ToolSpec
+from .net import check_url
 
 # Tools that change data are skipped unless the user passes --allow-writes.
 WRITE_VERB = re.compile(r"^(create|block|update|delete|cancel|book|send|report|request|submit|add|remove|transfer|pay)_")
@@ -47,11 +48,16 @@ def build_request(t: ToolSpec, auth_header: str | None, base_url: str | None) ->
 
 
 def probe(t: ToolSpec, auth_header: str | None = None, base_url: str | None = None,
-          allow_writes: bool = False) -> tuple[ProbeResult, list[Finding]]:
+          allow_writes: bool = False, public_only: bool = False) -> tuple[ProbeResult, list[Finding]]:
     r = ProbeResult(tool=t.name)
     if WRITE_VERB.match(t.name) and not allow_writes:
         r.skipped = "changes data; rerun with --allow-writes against a test copy"
         return r, []
+    blocked = check_url(base_url or t.url, public_only=public_only)
+    if blocked:
+        r.skipped = f"not called: {blocked}"
+        return r, [Finding(t.name, "probe.blocked", WARN, f"Live call skipped: {blocked}",
+                           "Use a public https URL, or run preflight on your own machine")]
     timeout = t.timeout_secs or 20
     start = time.monotonic()
     try:

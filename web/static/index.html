@@ -64,7 +64,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
   <p class="sub">Check an ElevenLabs agent's webhook tools, and the n8n workflows behind them, before it goes live.</p>
 
   <form class="card" id="form">
-    <div class="grid">
+    <div class="grid" id="paths">
       <div class="row">
         <label for="tools_path">Tools folder or agent JSON</label>
         <input type="text" id="tools_path" placeholder="/path/to/agent/tools">
@@ -72,6 +72,16 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
       <div class="row">
         <label for="n8n_path">n8n workflow folder or file</label>
         <input type="text" id="n8n_path" placeholder="/path/to/n8n">
+      </div>
+    </div>
+    <div class="grid">
+      <div class="row">
+        <label for="tools_files">Tool files (JSON, one per tool, or an agent export)</label>
+        <input type="file" id="tools_files" accept=".json,application/json" multiple>
+      </div>
+      <div class="row">
+        <label for="n8n_files">n8n workflow files (JSON)</label>
+        <input type="file" id="n8n_files" accept=".json,application/json" multiple>
       </div>
     </div>
     <div class="row">
@@ -169,12 +179,27 @@ function render(d) {
   $('download').setAttribute('download', `preflight-${d.agent.replace(/\W+/g, '-').toLowerCase()}.md`);
 }
 
+const readFiles = async (input) => Promise.all(
+  [...input.files].map(f => f.text().then(content => ({name: f.name, content}))));
+
+fetch('/api/config').then(r => r.json()).then(cfg => {
+  if (!cfg.allow_paths) {
+    $('paths').classList.add('hide');
+    $('hint').textContent = 'Upload your config files. Nothing is stored after the check.';
+  }
+}).catch(() => {});
+
 $('form').onsubmit = async (e) => {
   e.preventDefault();
+  const toolsFiles = await readFiles($('tools_files'));
+  const n8nFiles = await readFiles($('n8n_files'));
   const body = {
-    name: $('name').value.trim(), tools_path: $('tools_path').value.trim(),
+    name: $('name').value.trim(),
+    // Uploads win, so a path left over in the form doesn't count as a second source.
+    tools_path: toolsFiles.length ? '' : $('tools_path').value.trim(),
+    tools_files: toolsFiles, n8n_files: n8nFiles,
     agent_id: $('agent_id').value.trim(), elevenlabs_key: $('elevenlabs_key').value,
-    n8n_paths: $('n8n_path').value.trim() ? [$('n8n_path').value.trim()] : [],
+    n8n_paths: (!n8nFiles.length && $('n8n_path').value.trim()) ? [$('n8n_path').value.trim()] : [],
     n8n_url: $('n8n_url').value.trim(), n8n_key: $('n8n_key').value,
     probe: $('probe').checked, auth_header: $('auth_header').value,
     base_url: $('base_url').value.trim(), allow_writes: $('allow_writes').checked,
