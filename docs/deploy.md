@@ -1,5 +1,9 @@
 # Hosting it on Render
 
+**Live since 2026-09-24:** https://agent-preflight.onrender.com (Render service `srv-daq25imk1f9s73dn9slg`,
+free plan, blueprint-managed from `main`). Sign in with any username and the `PREFLIGHT_PASSWORD` set in
+the Render dashboard. Pushing to `main` redeploys it.
+
 The app runs in one of two modes, set by `PREFLIGHT_MODE`:
 
 | | `local` (default) | `hosted` |
@@ -28,6 +32,15 @@ environment variables.
   a network it happens to sit inside.
 - **Strangers using your instance.** HTTP Basic auth on every route except `/healthz`.
 - **Oversized uploads.** At most 60 files and 2,000,000 characters per file.
+
+## If the login keeps reappearing
+
+Basic auth re-prompts instead of showing an error, so a repeating box means the password is wrong:
+- Reveal `PREFLIGHT_PASSWORD` in Render's Environment tab (eye icon) and compare character by character;
+  a trailing space from a paste is invisible in the box.
+- Check the values did not land in the wrong rows — one `PREFLIGHT…` row must read exactly `hosted`.
+- Try a private window: browsers resend cached Basic auth credentials without asking again.
+- Do not use Render's **Generate** button for this variable; it creates a value you cannot read back.
 
 ## What it still does not do
 
